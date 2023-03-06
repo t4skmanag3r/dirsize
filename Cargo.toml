@@ -1,0 +1,14 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "dirsize"
+description = "Disk usage scanner with an navigable TUI for displaying directory/file sizes"
+version = "0.1.0"
+edition = "2021"
+authors = ["Edvinas Adomaitis <edvinasad7@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/t4skmanag3r/dirsize"
+
+[dependencies]
+crossterm = "0.26.0"
+env_logger = "0.10.0"
+log = "0.4.17"

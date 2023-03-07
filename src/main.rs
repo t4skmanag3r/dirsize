@@ -18,6 +18,7 @@ fn print_menu<W: Write>(
     let filtered = items.filter_size(SIZE_MIN);
     let mut y = 0;
     for (i, item) in filtered.as_ref().unwrap().iter().enumerate() {
+        queue!(stdout, cursor::MoveToColumn(0))?;
         if i < scroll_offset {
             continue;
         }
@@ -79,6 +80,7 @@ fn main() -> Result<()> {
     let mut went_back = false;
 
     // Initialize the terminal and clear the screen.
+    terminal::enable_raw_mode()?;
     let mut stdout = stdout();
     execute!(stdout, terminal::EnterAlternateScreen)?;
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
@@ -195,5 +197,6 @@ fn main() -> Result<()> {
 
     // Restore the original terminal state and exit the program.
     execute!(stdout, terminal::LeaveAlternateScreen)?;
+    terminal::disable_raw_mode()?;
     Ok(())
 }

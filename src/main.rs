@@ -17,6 +17,12 @@ fn print_menu<W: Write>(
     queue!(stdout, cursor::MoveToRow(0))?;
     let filtered = items.filter_size(SIZE_MIN);
     let mut y = 0;
+    let max_len = filtered
+        .as_ref()
+        .unwrap()
+        .iter()
+        .map(|dir| dir.name().len())
+        .fold(0, |acc, l| if l > acc { l } else { acc });
     for (i, item) in filtered.as_ref().unwrap().iter().enumerate() {
         queue!(stdout, cursor::MoveToColumn(0))?;
         if i < scroll_offset {
@@ -35,10 +41,11 @@ fn print_menu<W: Write>(
         queue!(
             stdout,
             style::Print(format!(
-                "{} - {:.2} {}\n",
-                item.path.file_name().unwrap().to_str().unwrap(),
+                "{:<max_len$} - {:.2} {}\n",
+                item.name(),
                 formated_size,
-                format_str
+                format_str,
+                max_len = max_len
             ))
         )?;
     }

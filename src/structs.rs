@@ -58,6 +58,10 @@ impl Dir {
         }
     }
 
+    pub fn name(&self) -> &str {
+        self.path.file_name().unwrap().to_str().unwrap()
+    }
+
     pub fn size_formated(&self, size_fmt: SizeFormat) -> (f32, &str) {
         let formated_size: f32 = match size_fmt {
             SizeFormat::BYTES => self.size as f32,

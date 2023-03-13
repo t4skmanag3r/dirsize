@@ -8,6 +8,17 @@ use std::path::Path;
 
 const SIZE_MIN: u64 = 1000000;
 
+fn print_navigation<W: Write>(stdout: &mut W) -> Result<()> {
+    let (_, terminal_height) = terminal::size().unwrap();
+    execute!(stdout, cursor::MoveToRow(terminal_height))?;
+    queue!(
+        stdout,
+        style::Print(format!(
+            "move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program"
+        ))
+    )
+}
+
 fn print_menu<W: Write>(
     stdout: &mut W,
     items: &Dir,
@@ -49,6 +60,7 @@ fn print_menu<W: Write>(
             ))
         )?;
     }
+    print_navigation(stdout)?;
     stdout.flush()?;
     Ok(())
 }
@@ -127,7 +139,7 @@ fn main() -> Result<()> {
                             if cursor_pos < filtered.unwrap().len() - 1 {
                                 cursor_pos += 1;
                                 selected_index += 1;
-                                if cursor_pos >= scroll_offset + terminal::size()?.1 as usize {
+                                if cursor_pos + 1 >= scroll_offset + terminal::size()?.1 as usize {
                                     scroll_offset += 1;
                                 }
                                 // Move the cursor down one row.
@@ -148,12 +160,6 @@ fn main() -> Result<()> {
                         crossterm::event::KeyCode::Enter | crossterm::event::KeyCode::Right => {
                             match &filtered {
                                 Some(c) => {
-                                    // if selected_index >= c.len() as usize {
-                                    //     went_back = false;
-                                    //     cursor_pos = 0;
-                                    //     selected_index = 0;
-                                    //     continue;
-                                    // }
                                     let s = &c[selected_index];
                                     if s.filter_size(SIZE_MIN).is_none() {
                                         continue;

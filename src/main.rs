@@ -44,12 +44,18 @@ fn print_menu<W: Write>(
             break;
         }
         if i == selected_index {
+            execute!(stdout, style::SetForegroundColor(style::Color::White))?;
             queue!(stdout, style::Print("> "))?;
         } else {
             queue!(stdout, style::Print("  "))?;
         }
         y += 1;
         let (formated_size, format_str) = item.size_formated(SizeFormat::MEGABYTES);
+        if item.is_file {
+            execute!(stdout, style::SetForegroundColor(style::Color::Red))?
+        } else {
+            execute!(stdout, style::SetForegroundColor(style::Color::White))?
+        }
         queue!(
             stdout,
             style::Print(format!(
@@ -61,6 +67,7 @@ fn print_menu<W: Write>(
             ))
         )?;
     }
+    execute!(stdout, style::ResetColor)?;
     print_navigation(stdout)?;
     stdout.flush()?;
     Ok(())

@@ -20,6 +20,7 @@ pub struct Dir {
     pub size: u64,
     pub path: PathBuf,
     pub contents: Option<Vec<Dir>>,
+    pub is_file: bool,
 }
 impl Dir {
     /// Create a new directory/file
@@ -28,11 +29,12 @@ impl Dir {
     /// - size - the size of the directory/file
     /// - path - the path to the directory/file
     /// - contents - the contents of the directory (if it's a directory)
-    pub fn new(size: u64, path: PathBuf, contents: Option<Vec<Dir>>) -> Self {
+    pub fn new(size: u64, path: PathBuf, contents: Option<Vec<Dir>>, is_file: bool) -> Self {
         Self {
             size,
             path,
             contents,
+            is_file,
         }
     }
 
@@ -40,8 +42,9 @@ impl Dir {
         let path = entry.path();
         let metadata = entry.metadata()?;
         let size = metadata.len();
+        let is_file = path.is_file();
 
-        Ok(Dir::new(size, path, None))
+        Ok(Dir::new(size, path, None, is_file))
     }
 
     pub fn len(&self) -> usize {

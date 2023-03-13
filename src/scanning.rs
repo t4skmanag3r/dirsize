@@ -34,7 +34,7 @@ pub fn make_dir_tree(path_to_dir: PathBuf) -> Dir {
                 path_to_dir.display(),
                 err
             );
-            return Dir::new(0, path_to_dir, None);
+            return Dir::new(0, path_to_dir, None, false);
         }
     };
 
@@ -67,11 +67,12 @@ pub fn make_dir_tree(path_to_dir: PathBuf) -> Dir {
                 },
             };
             debug!("{} is a file with size: {} bytes", path.display(), size);
-            contents.push(Dir::new(size, path, None));
+            let is_file = path.is_file();
+            contents.push(Dir::new(size, path, None, is_file));
         }
     }
     let sizes: Vec<u64> = contents.iter().map(|x: &Dir| x.size).collect();
-    let dir = Dir::new(sizes.iter().sum(), path_to_dir, Some(contents));
+    let dir = Dir::new(sizes.iter().sum(), path_to_dir, Some(contents), false);
     dir
 }
 
@@ -85,7 +86,7 @@ pub fn make_dir_tree_multithreaded(path_to_dir: PathBuf) -> Dir {
                 path_to_dir.display(),
                 err
             );
-            return Dir::new(0, path_to_dir, None);
+            return Dir::new(0, path_to_dir, None, false);
         }
     };
     let mut handles = Vec::new();
@@ -124,7 +125,8 @@ pub fn make_dir_tree_multithreaded(path_to_dir: PathBuf) -> Dir {
             };
 
             debug!("{} is a file with size: {} bytes", path.display(), size);
-            contents.push(Dir::new(size, path, None));
+            let is_file = path.is_file();
+            contents.push(Dir::new(size, path, None, is_file));
         }
     }
     for handle in handles {
@@ -132,7 +134,7 @@ pub fn make_dir_tree_multithreaded(path_to_dir: PathBuf) -> Dir {
         contents.push(res);
     }
     let sizes: Vec<u64> = contents.iter().map(|x: &Dir| x.size).collect();
-    let dir = Dir::new(sizes.iter().sum(), path_to_dir, Some(contents));
+    let dir = Dir::new(sizes.iter().sum(), path_to_dir, Some(contents), false);
     dir
 }
 

@@ -11,6 +11,7 @@ const SIZE_MIN: u64 = 1000000;
 fn print_navigation<W: Write>(stdout: &mut W) -> Result<()> {
     let (_, terminal_height) = terminal::size().unwrap();
     execute!(stdout, cursor::MoveToRow(terminal_height))?;
+    execute!(stdout, cursor::MoveToColumn(0))?;
     queue!(
         stdout,
         style::Print(format!(

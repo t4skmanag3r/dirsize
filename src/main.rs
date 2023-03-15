@@ -8,40 +8,70 @@ use std::path::Path;
 
 const SIZE_MIN: u64 = 1000000;
 
+fn print_navigation<W: Write>(stdout: &mut W) -> Result<()> {
+    let (_, terminal_height) = terminal::size().unwrap();
+    execute!(stdout, cursor::MoveToRow(terminal_height))?;
+    execute!(stdout, cursor::MoveToColumn(0))?;
+    queue!(
+        stdout,
+        style::Print(format!(
+            "move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program"
+        ))
+    )
+}
+
 fn print_menu<W: Write>(
     stdout: &mut W,
     items: &Dir,
     selected_index: usize,
     scroll_offset: usize,
 ) -> Result<()> {
-    queue!(stdout, cursor::MoveToRow(0))?;
+    queue!(stdout, cursor::MoveTo(0, 0))?;
     let filtered = items.filter_size(SIZE_MIN);
     let mut y = 0;
+    let max_len = filtered
+        .as_ref()
+        .unwrap()
+        .iter()
+        .map(|dir| dir.name().len())
+        .fold(0, |acc, l| if l > acc { l } else { acc });
+    queue!(stdout, style::Print(items.path.display()))?;
+    execute!(stdout, style::SetForegroundColor(style::Color::Grey))?;
+    queue!(stdout, cursor::MoveToNextLine(1))?;
     for (i, item) in filtered.as_ref().unwrap().iter().enumerate() {
         queue!(stdout, cursor::MoveToColumn(0))?;
         if i < scroll_offset {
             continue;
         }
-        if y >= terminal::size()?.1 - 1 {
+        if y >= terminal::size()?.1 - 2 {
             break;
         }
         if i == selected_index {
+            execute!(stdout, style::SetForegroundColor(style::Color::White))?;
             queue!(stdout, style::Print("> "))?;
         } else {
             queue!(stdout, style::Print("  "))?;
         }
         y += 1;
         let (formated_size, format_str) = item.size_formated(SizeFormat::MEGABYTES);
+        if item.is_file {
+            execute!(stdout, style::SetForegroundColor(style::Color::Red))?
+        } else {
+            execute!(stdout, style::SetForegroundColor(style::Color::White))?
+        }
         queue!(
             stdout,
             style::Print(format!(
-                "{} - {:.2} {}\n",
-                item.path.file_name().unwrap().to_str().unwrap(),
+                "{:<max_len$} - {:.2} {}\n",
+                item.name(),
                 formated_size,
-                format_str
+                format_str,
+                max_len = max_len
             ))
         )?;
     }
+    execute!(stdout, style::ResetColor)?;
+    print_navigation(stdout)?;
     stdout.flush()?;
     Ok(())
 }
@@ -111,7 +141,7 @@ fn main() -> Result<()> {
                                 cursor_pos = filter_len;
                                 selected_index = cursor_pos;
                                 if filter_len > terminal::size()?.1 as usize {
-                                    scroll_offset = filter_len - terminal::size()?.1 as usize + 2;
+                                    scroll_offset = filter_len - terminal::size()?.1 as usize + 3;
                                 }
                                 queue!(stdout, cursor::MoveToRow(cursor_pos as u16))?;
                             }
@@ -120,7 +150,9 @@ fn main() -> Result<()> {
                             if cursor_pos < filtered.unwrap().len() - 1 {
                                 cursor_pos += 1;
                                 selected_index += 1;
-                                if cursor_pos >= scroll_offset + terminal::size()?.1 as usize {
+                                if cursor_pos + 1
+                                    >= scroll_offset + terminal::size()?.1 as usize - 1
+                                {
                                     scroll_offset += 1;
                                 }
                                 // Move the cursor down one row.
@@ -141,12 +173,6 @@ fn main() -> Result<()> {
                         crossterm::event::KeyCode::Enter | crossterm::event::KeyCode::Right => {
                             match &filtered {
                                 Some(c) => {
-                                    // if selected_index >= c.len() as usize {
-                                    //     went_back = false;
-                                    //     cursor_pos = 0;
-                                    //     selected_index = 0;
-                                    //     continue;
-                                    // }
                                     let s = &c[selected_index];
                                     if s.filter_size(SIZE_MIN).is_none() {
                                         continue;

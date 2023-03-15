@@ -1,7 +1,7 @@
 use crate::structs::{Dir, SizeFormat};
 use crossterm::{
     cursor,
-    event::{Event, KeyCode, KeyEvent},
+    event::{Event, KeyCode, KeyEvent, KeyEventKind},
     queue, style, terminal, QueueableCommand, Result,
 };
 use std::io::Write;
@@ -85,7 +85,7 @@ impl<'a> Menu<'a> {
                         item.display_menu(&self.size_fmt, Some(self.calculate_max_len()))
                     )))
                     .unwrap();
-                stdout.queue(cursor::MoveToNextLine(1)).unwrap();
+                stdout.queue(cursor::MoveDown(1)).unwrap();
                 stdout.queue(cursor::MoveToColumn(0)).unwrap();
             }
         }
@@ -114,36 +114,36 @@ impl<'a> Menu<'a> {
         loop {
             self.draw(&mut stdout);
 
-            if let Event::Key(KeyEvent {
-                code: KeyCode::Esc, ..
-            }) = crossterm::event::read().unwrap()
-            {
-                break;
-            }
-
-            if let Event::Key(KeyEvent { code, .. }) = crossterm::event::read().unwrap() {
-                match code {
-                    KeyCode::Up => {
-                        if self.cursor_pos > 0 {
-                            self.cursor_pos -= 1;
-                        } else {
-                            self.cursor_pos = self.filtered.len() - 1
+            if let Ok(event) = crossterm::event::read() {
+                if let Event::Key(key_event) = event {
+                    if let KeyEventKind::Press = key_event.kind {
+                        match key_event.code {
+                            KeyCode::Esc => {
+                                break;
+                            }
+                            KeyCode::Up => {
+                                if self.cursor_pos > 0 {
+                                    self.cursor_pos -= 1;
+                                } else {
+                                    self.cursor_pos = self.filtered.len() - 1
+                                }
+                            }
+                            KeyCode::Down => {
+                                if self.cursor_pos < self.filtered.len() - 1 {
+                                    self.cursor_pos += 1;
+                                } else {
+                                    self.cursor_pos = 0;
+                                }
+                            }
+                            KeyCode::Enter | KeyCode::Right => {
+                                self.select_item();
+                            }
+                            KeyCode::Backspace | KeyCode::Left => {
+                                self.go_back();
+                            }
+                            _ => {}
                         }
                     }
-                    KeyCode::Down => {
-                        if self.cursor_pos < self.filtered.len() - 1 {
-                            self.cursor_pos += 1;
-                        } else {
-                            self.cursor_pos = 0;
-                        }
-                    }
-                    KeyCode::Enter | KeyCode::Right => {
-                        self.select_item();
-                    }
-                    KeyCode::Backspace | KeyCode::Left => {
-                        self.go_back();
-                    }
-                    _ => {}
                 }
             }
         }

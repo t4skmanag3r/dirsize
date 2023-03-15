@@ -56,6 +56,17 @@ impl<'a> Menu<'a> {
         }
     }
 
+    fn draw_navigation_info(&self, stdout: &mut impl Write) {
+        let (_, terminal_height) = terminal::size().unwrap();
+        stdout.queue(cursor::MoveToRow(terminal_height)).unwrap();
+        stdout.queue(cursor::MoveToColumn(0)).unwrap();
+        stdout.queue(
+            style::Print(format!(
+                "move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program"
+            ))
+        ).unwrap();
+    }
+
     /// Draws the menu to the scren
     fn draw(&self, stdout: &mut impl Write) {
         stdout.queue(cursor::MoveTo(0, 0)).unwrap();
@@ -89,6 +100,10 @@ impl<'a> Menu<'a> {
                 stdout.queue(cursor::MoveToColumn(0)).unwrap();
             }
         }
+        stdout
+            .queue(style::SetForegroundColor(style::Color::White))
+            .unwrap();
+        self.draw_navigation_info(stdout);
         stdout.flush().unwrap();
     }
 
@@ -160,7 +175,7 @@ impl<'a> Menu<'a> {
         let items_len = self.filtered.len() - 1;
         let (terminal_width, terminal_height) = terminal::size().unwrap();
         let (terminal_width, terminal_height) =
-            (terminal_width as usize - 1, terminal_height as usize - 1);
+            (terminal_width as usize - 1, terminal_height as usize - 2);
         if self.cursor_pos <= (terminal_height / 2) {
             (0, terminal_height)
         } else {

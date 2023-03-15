@@ -41,7 +41,9 @@ pub struct Menu<'a> {
 impl<'a> Menu<'a> {
     pub fn new(dir: &'a mut Dir, size_fmt: SizeFormat) -> Self {
         let cursor_pos = 0;
-        let filtered = dir.filter_size(SIZE_FILTER_MIN).unwrap(); // filters dirs for size above a threshold
+        let filtered = dir
+            .filter_size(SIZE_FILTER_MIN)
+            .expect("Expected dir to have files/dirs above a minimum size of 1mb"); // filters dirs for size above a threshold
         let last_selected = vec![]; // used to track the directory tree traversal
         Self {
             root_dir: dir,
@@ -101,7 +103,7 @@ impl<'a> Menu<'a> {
         }
         queue!(stdout, style::SetForegroundColor(style::Color::White))?;
         self.draw_navigation_info(stdout)?;
-        stdout.flush().unwrap();
+        stdout.flush()?;
         Ok(())
     }
 
@@ -121,7 +123,7 @@ impl<'a> Menu<'a> {
         queue!(stdout, terminal::EnterAlternateScreen)?;
         queue!(stdout, terminal::Clear(terminal::ClearType::All))?;
         queue!(stdout, cursor::Hide)?;
-        stdout.flush().unwrap();
+        stdout.flush()?;
 
         // menu input handling loop
         loop {
@@ -197,15 +199,13 @@ impl<'a> Menu<'a> {
         if select.contents.is_none() {
             return;
         }
-        let filter = select.filter_size(SIZE_FILTER_MIN);
-        if filter.is_none() {
-            return;
-        }
-        self.selected_dir = select;
-        self.filtered = filter.unwrap();
+        if let Some(filter) = select.filter_size(SIZE_FILTER_MIN) {
+            self.selected_dir = select;
+            self.filtered = filter;
 
-        self.last_selected.push(self.cursor_pos);
-        self.cursor_pos = 0;
+            self.last_selected.push(self.cursor_pos);
+            self.cursor_pos = 0;
+        }
     }
 
     /// Go back to the previuous menu item

@@ -26,7 +26,7 @@ fn print_menu<W: Write>(
     selected_index: usize,
     scroll_offset: usize,
 ) -> Result<()> {
-    queue!(stdout, cursor::MoveToRow(0))?;
+    queue!(stdout, cursor::MoveTo(0, 0))?;
     let filtered = items.filter_size(SIZE_MIN);
     let mut y = 0;
     let max_len = filtered
@@ -35,12 +35,15 @@ fn print_menu<W: Write>(
         .iter()
         .map(|dir| dir.name().len())
         .fold(0, |acc, l| if l > acc { l } else { acc });
+    queue!(stdout, style::Print(items.path.display()))?;
+    execute!(stdout, style::SetForegroundColor(style::Color::Grey))?;
+    queue!(stdout, cursor::MoveToNextLine(1))?;
     for (i, item) in filtered.as_ref().unwrap().iter().enumerate() {
         queue!(stdout, cursor::MoveToColumn(0))?;
         if i < scroll_offset {
             continue;
         }
-        if y >= terminal::size()?.1 - 1 {
+        if y >= terminal::size()?.1 - 2 {
             break;
         }
         if i == selected_index {
@@ -138,7 +141,7 @@ fn main() -> Result<()> {
                                 cursor_pos = filter_len;
                                 selected_index = cursor_pos;
                                 if filter_len > terminal::size()?.1 as usize {
-                                    scroll_offset = filter_len - terminal::size()?.1 as usize + 2;
+                                    scroll_offset = filter_len - terminal::size()?.1 as usize + 3;
                                 }
                                 queue!(stdout, cursor::MoveToRow(cursor_pos as u16))?;
                             }
@@ -147,7 +150,9 @@ fn main() -> Result<()> {
                             if cursor_pos < filtered.unwrap().len() - 1 {
                                 cursor_pos += 1;
                                 selected_index += 1;
-                                if cursor_pos + 1 >= scroll_offset + terminal::size()?.1 as usize {
+                                if cursor_pos + 1
+                                    >= scroll_offset + terminal::size()?.1 as usize - 1
+                                {
                                     scroll_offset += 1;
                                 }
                                 // Move the cursor down one row.

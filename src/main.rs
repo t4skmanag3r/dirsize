@@ -50,7 +50,7 @@ fn print_menu<W: Write>(
             queue!(stdout, style::Print("  "))?;
         }
         y += 1;
-        let (formated_size, format_str) = item.size_formated(SizeFormat::MEGABYTES);
+        let (formated_size, format_str) = item.size_formated(&SizeFormat::MEGABYTES);
         if item.is_file {
             execute!(stdout, style::SetForegroundColor(style::Color::Red))?
         } else {

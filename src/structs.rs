@@ -65,7 +65,7 @@ impl Dir {
         self.path.file_name().unwrap().to_str().unwrap()
     }
 
-    pub fn size_formated(&self, size_fmt: SizeFormat) -> (f32, &str) {
+    pub fn size_formated(&self, size_fmt: &SizeFormat) -> (f32, &str) {
         let formated_size: f32 = match size_fmt {
             SizeFormat::BYTES => self.size as f32,
             SizeFormat::MEGABYTES => self.size as f32 / 1000000.0,
@@ -79,7 +79,7 @@ impl Dir {
         (formated_size, format_str)
     }
     /// String representation of the directory/file
-    pub fn display(&self, size_fmt: SizeFormat) -> String {
+    pub fn display(&self, size_fmt: &SizeFormat) -> String {
         let (formated_size, format_str) = self.size_formated(size_fmt);
         format!(
             "path: \"{}\" size: {:.2} {}",
@@ -89,7 +89,7 @@ impl Dir {
         )
     }
     pub fn display_default(&self) -> String {
-        self.display(SizeFormat::MEGABYTES)
+        self.display(&SizeFormat::MEGABYTES)
     }
 
     /// Recursively finds the parent Dir of a given path in the Dir structure

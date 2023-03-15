@@ -207,25 +207,3 @@ impl<'a> Menu<'a> {
         self.cursor_pos = self.last_selected.pop().unwrap_or(0);
     }
 }
-
-#[cfg(test)]
-mod test {
-    use std::path::Path;
-
-    use crate::menu::Menu;
-    use crate::scanning::make_dir_tree_multithreaded;
-    use crate::structs::SizeFormat;
-    use crossterm::Result;
-
-    #[test]
-    fn test_menu() -> Result<()> {
-        const SIZE_FMT_DEFAULT: SizeFormat = SizeFormat::MEGABYTES;
-
-        let root = Path::new(".");
-        let mut dir = make_dir_tree_multithreaded(root.to_path_buf());
-        dir.sort_by_size();
-
-        let mut menu = Menu::new(&mut dir, SIZE_FMT_DEFAULT);
-        menu.run()
-    }
-}

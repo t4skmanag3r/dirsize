@@ -56,6 +56,16 @@ impl<'a> Menu<'a> {
         }
     }
 
+    fn draw_directory_path(&self, stdout: &mut impl Write) {
+        stdout.queue(cursor::MoveTo(0, 0)).unwrap();
+        stdout
+            .queue(style::SetForegroundColor(style::Color::Grey))
+            .unwrap();
+        stdout
+            .queue(style::Print(self.selected_dir.path.display()))
+            .unwrap();
+    }
+
     fn draw_navigation_info(&self, stdout: &mut impl Write) {
         let (_, terminal_height) = terminal::size().unwrap();
         stdout.queue(cursor::MoveToRow(terminal_height)).unwrap();
@@ -73,7 +83,9 @@ impl<'a> Menu<'a> {
         stdout
             .queue(terminal::Clear(terminal::ClearType::All))
             .unwrap();
-
+        self.draw_directory_path(stdout);
+        stdout.queue(cursor::MoveDown(1)).unwrap();
+        stdout.queue(cursor::MoveToColumn(0)).unwrap();
         for (i, item) in self.filtered.iter().enumerate() {
             let (start_index, end_index) = self.calculate_index_bounds();
             if (i >= start_index) & (i <= end_index) {
@@ -175,7 +187,7 @@ impl<'a> Menu<'a> {
         let items_len = self.filtered.len() - 1;
         let (terminal_width, terminal_height) = terminal::size().unwrap();
         let (terminal_width, terminal_height) =
-            (terminal_width as usize - 1, terminal_height as usize - 2);
+            (terminal_width as usize - 1, terminal_height as usize - 3);
         if self.cursor_pos <= (terminal_height / 2) {
             (0, terminal_height)
         } else {

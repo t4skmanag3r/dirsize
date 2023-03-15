@@ -2,7 +2,7 @@
 [package]
 name = "dirsize"
 description = "Disk usage scanner with an navigable TUI for displaying directory/file sizes"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Edvinas Adomaitis <edvinasad7@gmail.com>"]
 license = "MIT"

@@ -1,7 +1,7 @@
 use crate::structs::{Dir, SizeFormat};
 use crossterm::{
     cursor,
-    event::{Event, KeyCode, KeyEvent, KeyEventKind},
+    event::{Event, KeyCode, KeyEventKind},
     queue, style, terminal, QueueableCommand, Result,
 };
 use std::io::Write;
@@ -9,17 +9,14 @@ use std::io::Write;
 impl Dir {
     fn display_menu(&self, size_fmt: &SizeFormat, max_len: Option<usize>) -> String {
         let (formated_size, format_str) = self.size_formated(size_fmt);
-        let max_len = match max_len {
-            Some(max_len) => max_len,
-            None => 25,
-        };
-        return format!(
+        let max_len = max_len.unwrap_or(25);
+        format!(
             "{:<max_len$} - {:.2} {}",
             self.name(),
             formated_size,
             format_str,
             max_len = max_len
-        );
+        )
     }
     fn color(&self) -> style::Color {
         if self.is_file {
@@ -71,9 +68,7 @@ impl<'a> Menu<'a> {
         stdout.queue(cursor::MoveToRow(terminal_height)).unwrap();
         stdout.queue(cursor::MoveToColumn(0)).unwrap();
         stdout.queue(
-            style::Print(format!(
-                "move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program"
-            ))
+            style::Print("move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program")
         ).unwrap();
     }
 
@@ -103,10 +98,9 @@ impl<'a> Menu<'a> {
                     .queue(style::SetForegroundColor(item.color()))
                     .unwrap();
                 stdout
-                    .queue(style::Print(format!(
-                        "{}",
-                        item.display_menu(&self.size_fmt, Some(self.calculate_max_len()))
-                    )))
+                    .queue(style::Print(
+                        item.display_menu(&self.size_fmt, Some(self.calculate_max_len())),
+                    ))
                     .unwrap();
                 stdout.queue(cursor::MoveDown(1)).unwrap();
                 stdout.queue(cursor::MoveToColumn(0)).unwrap();
@@ -141,35 +135,33 @@ impl<'a> Menu<'a> {
         loop {
             self.draw(&mut stdout);
 
-            if let Ok(event) = crossterm::event::read() {
-                if let Event::Key(key_event) = event {
-                    if let KeyEventKind::Press = key_event.kind {
-                        match key_event.code {
-                            KeyCode::Esc => {
-                                break;
-                            }
-                            KeyCode::Up => {
-                                if self.cursor_pos > 0 {
-                                    self.cursor_pos -= 1;
-                                } else {
-                                    self.cursor_pos = self.filtered.len() - 1
-                                }
-                            }
-                            KeyCode::Down => {
-                                if self.cursor_pos < self.filtered.len() - 1 {
-                                    self.cursor_pos += 1;
-                                } else {
-                                    self.cursor_pos = 0;
-                                }
-                            }
-                            KeyCode::Enter | KeyCode::Right => {
-                                self.select_item();
-                            }
-                            KeyCode::Backspace | KeyCode::Left => {
-                                self.go_back();
-                            }
-                            _ => {}
+            if let Ok(Event::Key(key_event)) = crossterm::event::read() {
+                if let KeyEventKind::Press = key_event.kind {
+                    match key_event.code {
+                        KeyCode::Esc => {
+                            break;
                         }
+                        KeyCode::Up => {
+                            if self.cursor_pos > 0 {
+                                self.cursor_pos -= 1;
+                            } else {
+                                self.cursor_pos = self.filtered.len() - 1
+                            }
+                        }
+                        KeyCode::Down => {
+                            if self.cursor_pos < self.filtered.len() - 1 {
+                                self.cursor_pos += 1;
+                            } else {
+                                self.cursor_pos = 0;
+                            }
+                        }
+                        KeyCode::Enter | KeyCode::Right => {
+                            self.select_item();
+                        }
+                        KeyCode::Backspace | KeyCode::Left => {
+                            self.go_back();
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -186,24 +178,21 @@ impl<'a> Menu<'a> {
     fn calculate_index_bounds(&self) -> (usize, usize) {
         let items_len = self.filtered.len() - 1;
         let (terminal_width, terminal_height) = terminal::size().unwrap();
-        let (terminal_width, terminal_height) =
-            (terminal_width as usize - 1, terminal_height as usize - 3);
+        let (_, terminal_height) = (terminal_width as usize - 1, terminal_height as usize - 3);
         if self.cursor_pos <= (terminal_height / 2) {
             (0, terminal_height)
+        } else if items_len > self.cursor_pos + (terminal_height / 2) {
+            (
+                self.cursor_pos - (terminal_height / 2) - 1,
+                self.cursor_pos + (terminal_height / 2),
+            )
+        } else if items_len > terminal_height {
+            (
+                self.cursor_pos - (terminal_height - (items_len - self.cursor_pos)),
+                items_len,
+            )
         } else {
-            if items_len > self.cursor_pos + (terminal_height / 2) {
-                (
-                    self.cursor_pos - (terminal_height / 2) - 1,
-                    self.cursor_pos + (terminal_height / 2),
-                )
-            } else if items_len > terminal_height {
-                (
-                    self.cursor_pos - (terminal_height - (items_len - self.cursor_pos)),
-                    items_len,
-                )
-            } else {
-                (0, items_len)
-            }
+            (0, items_len)
         }
     }
 
@@ -213,17 +202,17 @@ impl<'a> Menu<'a> {
             .filtered
             .get(self.cursor_pos)
             .expect("Out of range index for selected item");
-        if let None = select.contents {
+        if select.contents.is_none() {
             return;
         }
         let filter = select.filter_size(SIZE_FILTER_MIN);
-        if let None = filter {
+        if filter.is_none() {
             return;
         }
         self.selected_dir = select;
         self.filtered = filter.unwrap();
 
-        self.last_selected.push(self.cursor_pos.clone());
+        self.last_selected.push(self.cursor_pos);
         self.cursor_pos = 0;
     }
 

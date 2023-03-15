@@ -2,7 +2,7 @@ use crate::structs::{Dir, SizeFormat};
 use crossterm::{
     cursor,
     event::{Event, KeyCode, KeyEventKind},
-    queue, style, terminal, QueueableCommand, Result,
+    queue, style, terminal, Result,
 };
 use std::io::Write;
 
@@ -53,64 +53,56 @@ impl<'a> Menu<'a> {
         }
     }
 
-    fn draw_directory_path(&self, stdout: &mut impl Write) {
-        stdout.queue(cursor::MoveTo(0, 0)).unwrap();
-        stdout
-            .queue(style::SetForegroundColor(style::Color::Grey))
-            .unwrap();
-        stdout
-            .queue(style::Print(self.selected_dir.path.display()))
-            .unwrap();
+    fn draw_directory_path(&self, stdout: &mut impl Write) -> Result<()> {
+        queue!(stdout, cursor::MoveTo(0, 0))?;
+        queue!(stdout, style::SetForegroundColor(style::Color::Grey))?;
+        queue!(stdout, style::Print(self.selected_dir.path.display()))?;
+        Ok(())
     }
 
-    fn draw_navigation_info(&self, stdout: &mut impl Write) {
+    fn draw_navigation_info(&self, stdout: &mut impl Write) -> Result<()> {
         let (_, terminal_height) = terminal::size().unwrap();
-        stdout.queue(cursor::MoveToRow(terminal_height)).unwrap();
-        stdout.queue(cursor::MoveToColumn(0)).unwrap();
-        stdout.queue(
+        queue!(stdout, cursor::MoveToRow(terminal_height))?;
+        queue!(stdout, cursor::MoveToColumn(0))?;
+        queue!(
+            stdout,
             style::Print("move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program")
-        ).unwrap();
+        )?;
+        Ok(())
     }
 
     /// Draws the menu to the scren
-    fn draw(&self, stdout: &mut impl Write) {
-        stdout.queue(cursor::MoveTo(0, 0)).unwrap();
-        stdout
-            .queue(terminal::Clear(terminal::ClearType::All))
-            .unwrap();
-        self.draw_directory_path(stdout);
-        stdout.queue(cursor::MoveDown(1)).unwrap();
-        stdout.queue(cursor::MoveToColumn(0)).unwrap();
+    fn draw(&self, stdout: &mut impl Write) -> Result<()> {
+        queue!(stdout, cursor::MoveTo(0, 0))?;
+        queue!(stdout, terminal::Clear(terminal::ClearType::All))?;
+        self.draw_directory_path(stdout)?;
+        queue!(stdout, cursor::MoveDown(1))?;
+        queue!(stdout, cursor::MoveToColumn(0))?;
         for (i, item) in self.filtered.iter().enumerate() {
             let (start_index, end_index) = self.calculate_index_bounds();
             if (i >= start_index) & (i <= end_index) {
                 // Printing the cursor
                 if i == self.cursor_pos {
-                    stdout
-                        .queue(style::SetForegroundColor(style::Color::White))
-                        .unwrap();
-                    stdout.queue(style::Print("> ")).unwrap();
+                    queue!(stdout, style::SetForegroundColor(style::Color::White))?;
+                    queue!(stdout, style::Print("> "))?;
                 } else {
-                    stdout.queue(style::Print("  ")).unwrap();
+                    queue!(stdout, style::Print("  "))?;
                 }
                 // Printing the items (dirrectories)
-                stdout
-                    .queue(style::SetForegroundColor(item.color()))
-                    .unwrap();
-                stdout
-                    .queue(style::Print(
-                        item.display_menu(&self.size_fmt, Some(self.calculate_max_len())),
-                    ))
-                    .unwrap();
-                stdout.queue(cursor::MoveDown(1)).unwrap();
-                stdout.queue(cursor::MoveToColumn(0)).unwrap();
+                queue!(stdout, style::SetForegroundColor(item.color()))?;
+                let max_str_len = self.calculate_max_len();
+                queue!(
+                    stdout,
+                    style::Print(item.display_menu(&self.size_fmt, Some(max_str_len)))
+                )?;
+                queue!(stdout, cursor::MoveDown(1))?;
+                queue!(stdout, cursor::MoveToColumn(0))?;
             }
         }
-        stdout
-            .queue(style::SetForegroundColor(style::Color::White))
-            .unwrap();
-        self.draw_navigation_info(stdout);
+        queue!(stdout, style::SetForegroundColor(style::Color::White))?;
+        self.draw_navigation_info(stdout)?;
         stdout.flush().unwrap();
+        Ok(())
     }
 
     /// Calculates the maximum directory name length of Vec<&Dir>
@@ -133,7 +125,7 @@ impl<'a> Menu<'a> {
 
         // menu input handling loop
         loop {
-            self.draw(&mut stdout);
+            self.draw(&mut stdout)?;
 
             if let Ok(Event::Key(key_event)) = crossterm::event::read() {
                 if let KeyEventKind::Press = key_event.kind {

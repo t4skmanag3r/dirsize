@@ -1,13 +1,36 @@
+use clap::Parser;
 use std::fmt;
 use std::fs;
 use std::io::Error;
 use std::path::PathBuf;
+use std::str::FromStr;
 
+#[derive(Debug, Parser, Clone)]
 /// Enum representation of different size formats
 pub enum SizeFormat {
+    // bytes
+    #[clap(name = "b")]
     BYTES,
+    // megabytes
+    #[clap(name = "mb")]
     MEGABYTES,
+    // gigabytes
+    #[clap(name = "gb")]
     GIGABYTES,
+}
+
+impl FromStr for SizeFormat {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "b" => Ok(Self::BYTES),
+            "mb" => Ok(Self::MEGABYTES),
+            "gb" => Ok(Self::GIGABYTES),
+            _ => Err(format!(
+                "Unrecognized size format\nexpected one of: [b, mb, gb]"
+            )),
+        }
+    }
 }
 
 /// Structure that represents the directory tree or file

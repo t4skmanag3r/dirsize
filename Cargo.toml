@@ -9,6 +9,7 @@ license = "MIT"
 repository = "https://github.com/t4skmanag3r/dirsize"
 
 [dependencies]
+clap = { version = "4.1.8", features = ["derive"] }
 crossterm = "0.26.0"
 env_logger = "0.10.0"
 log = "0.4.17"

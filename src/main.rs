@@ -12,7 +12,7 @@ struct Args {
     /// path to dirrectory
     #[arg()]
     path: PathBuf,
-    /// size format, possible values : [gb, mb, b]
+    /// size format, possible values : [gb, mb, kb, b]
     #[arg(short, long, default_value = "mb")]
     size: Option<SizeFormat>,
 }

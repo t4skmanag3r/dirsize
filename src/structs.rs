@@ -26,9 +26,7 @@ impl FromStr for SizeFormat {
             "b" => Ok(Self::BYTES),
             "mb" => Ok(Self::MEGABYTES),
             "gb" => Ok(Self::GIGABYTES),
-            _ => Err(format!(
-                "Unrecognized size format\nexpected one of: [b, mb, gb]"
-            )),
+            _ => Err("Unrecognized size format\nexpected one of: [b, mb, gb]".to_string()),
         }
     }
 }

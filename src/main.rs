@@ -1,10 +1,10 @@
 extern crate dirsize;
-use clap::{error::ErrorKind, CommandFactory, Parser};
+use clap::Parser;
 use crossterm::Result;
 use dirsize::menu::Menu;
 use dirsize::scanning::make_dir_tree_multithreaded;
 use dirsize::structs::SizeFormat;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

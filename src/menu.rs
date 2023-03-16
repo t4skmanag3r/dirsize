@@ -173,7 +173,7 @@ impl<'a> Menu<'a> {
                             self.go_back();
                         }
                         KeyCode::Char('o') => {
-                            if open(&self.selected_dir.path.as_os_str()).is_err() {
+                            if open(self.selected_dir.path.as_os_str()).is_err() {
                                 self.draw_warning(
                                     &mut stdout,
                                     "Failed to open the directory",

@@ -10,7 +10,8 @@ use std::path::{Path, PathBuf};
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// path to dirrectory
-    path: Option<PathBuf>,
+    #[arg()]
+    path: PathBuf,
     /// size format, possible values : [gb, mb, b]
     #[arg(short, long, default_value = "mb")]
     size: Option<SizeFormat>,
@@ -19,31 +20,15 @@ struct Args {
 fn main() -> Result<()> {
     // Parsing arguments
     let args = Args::parse();
-    let dir_path: &Path = match args.path.as_deref() {
-        Some(path) => path,
-        None => {
-            let mut cmd = Args::command();
-            cmd.error(
-                ErrorKind::MissingRequiredArgument,
-                "Missing dirrectory path",
-            )
-            .exit()
-        }
-    };
+    let root_path = args.path;
     let size_format = args.size.unwrap();
-    println!("{}", dir_path.display());
-
-    // Logging
-    std::env::set_var("RUST_LOG", "error");
-    env_logger::init();
-
-    // Creating path to directory
-    let path = std::env::args().nth(1).expect("missing path to directory");
-    let root = Path::new(&path);
 
     // Scaning the directory structure
-    println!("Running size calculation for directory: {}", root.display());
-    let mut dir = make_dir_tree_multithreaded(root.to_path_buf());
+    println!(
+        "Running size calculation for directory: {}",
+        root_path.display()
+    );
+    let mut dir = make_dir_tree_multithreaded(root_path);
 
     // Sorting the directory from bigest to smallest
     dir.sort_by_size();

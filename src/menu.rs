@@ -4,6 +4,7 @@ use crossterm::{
     event::{Event, KeyCode, KeyEventKind},
     queue, style, terminal, Result,
 };
+use opener::open;
 use std::io::Write;
 
 impl Dir {
@@ -68,8 +69,24 @@ impl<'a> Menu<'a> {
         queue!(stdout, cursor::MoveToColumn(0))?;
         queue!(
             stdout,
-            style::Print("move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program")
+            style::Print("move with (↑ & ↓), navigate dirs (→ or [Enter] & ← or [Backspace]), [Esc] to exit program, [o] open dir")
         )?;
+        Ok(())
+    }
+
+    fn draw_warning(
+        &self,
+        stdout: &mut impl Write,
+        message: &str,
+        color: style::Color,
+    ) -> Result<()> {
+        let (_, terminal_height) = terminal::size().unwrap();
+        queue!(stdout, cursor::MoveToRow(terminal_height))?;
+        queue!(stdout, cursor::MoveToColumn(0))?;
+        queue!(stdout, terminal::Clear(terminal::ClearType::CurrentLine))?;
+        queue!(stdout, style::SetForegroundColor(color))?;
+        queue!(stdout, style::Print(message))?;
+        stdout.flush()?;
         Ok(())
     }
 
@@ -155,6 +172,16 @@ impl<'a> Menu<'a> {
                         KeyCode::Backspace | KeyCode::Left => {
                             self.go_back();
                         }
+                        KeyCode::Char('o') => {
+                            if open(self.selected_dir.path.as_os_str()).is_err() {
+                                self.draw_warning(
+                                    &mut stdout,
+                                    "Failed to open the directory",
+                                    style::Color::Red,
+                                )?;
+                                block_until_key_press();
+                            }
+                        }
                         _ => {}
                     }
                 }
@@ -213,5 +240,15 @@ impl<'a> Menu<'a> {
         self.selected_dir = self.root_dir.find(&self.selected_dir.path);
         self.filtered = self.selected_dir.filter_size(SIZE_FILTER_MIN).unwrap();
         self.cursor_pos = self.last_selected.pop().unwrap_or(0);
+    }
+}
+
+fn block_until_key_press() {
+    loop {
+        if let Ok(Event::Key(key)) = crossterm::event::read() {
+            if let KeyEventKind::Press = key.kind {
+                break;
+            }
+        };
     }
 }

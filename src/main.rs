@@ -1,30 +1,39 @@
 extern crate dirsize;
+use clap::Parser;
 use crossterm::Result;
 use dirsize::menu::Menu;
 use dirsize::scanning::make_dir_tree_multithreaded;
 use dirsize::structs::SizeFormat;
-use std::path::Path;
+use std::path::PathBuf;
 
-// Seting default size formating
-const SIZE_FMT_DEFAULT: SizeFormat = SizeFormat::MEGABYTES;
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// path to dirrectory
+    #[arg()]
+    path: PathBuf,
+    /// size format, possible values : [gb, mb, kb, b]
+    #[arg(short, long, default_value = "mb")]
+    size: Option<SizeFormat>,
+}
 
 fn main() -> Result<()> {
-    // Logging
-    std::env::set_var("RUST_LOG", "error");
-    env_logger::init();
-
-    // Creating path to directory
-    let path = std::env::args().nth(1).expect("missing path to directory");
-    let root = Path::new(&path);
+    // Parsing arguments
+    let args = Args::parse();
+    let root_path = args.path;
+    let size_format = args.size.unwrap();
 
     // Scaning the directory structure
-    println!("Running size calculation for directory: {}", root.display());
-    let mut dir = make_dir_tree_multithreaded(root.to_path_buf());
+    println!(
+        "Running size calculation for directory: {}",
+        root_path.display()
+    );
+    let mut dir = make_dir_tree_multithreaded(root_path);
 
     // Sorting the directory from bigest to smallest
     dir.sort_by_size();
 
     // Starting menu
-    let mut menu = Menu::new(&mut dir, SIZE_FMT_DEFAULT);
+    let mut menu = Menu::new(&mut dir, size_format);
     menu.run()
 }

@@ -1,13 +1,38 @@
+use clap::Parser;
 use std::fmt;
 use std::fs;
 use std::io::Error;
 use std::path::PathBuf;
+use std::str::FromStr;
 
+#[derive(Debug, Parser, Clone)]
 /// Enum representation of different size formats
 pub enum SizeFormat {
+    // bytes
+    #[clap(name = "b")]
     BYTES,
+    // kilobytes
+    #[clap(name = "kb")]
+    KILOBYTES,
+    // megabytes
+    #[clap(name = "mb")]
     MEGABYTES,
+    // gigabytes
+    #[clap(name = "gb")]
     GIGABYTES,
+}
+
+impl FromStr for SizeFormat {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "b" => Ok(Self::BYTES),
+            "kb" => Ok(Self::KILOBYTES),
+            "mb" => Ok(Self::MEGABYTES),
+            "gb" => Ok(Self::GIGABYTES),
+            _ => Err("Unrecognized size format\nexpected one of: [b, kb, mb, gb]".to_string()),
+        }
+    }
 }
 
 /// Structure that represents the directory tree or file
@@ -68,11 +93,13 @@ impl Dir {
     pub fn size_formated(&self, size_fmt: &SizeFormat) -> (f32, &str) {
         let formated_size: f32 = match size_fmt {
             SizeFormat::BYTES => self.size as f32,
+            SizeFormat::KILOBYTES => self.size as f32 / 1000.0,
             SizeFormat::MEGABYTES => self.size as f32 / 1000000.0,
             SizeFormat::GIGABYTES => self.size as f32 / 1000000.0 / 1000.0,
         };
         let format_str: &str = match size_fmt {
-            SizeFormat::BYTES => "bytes",
+            SizeFormat::BYTES => "b",
+            SizeFormat::KILOBYTES => "kb",
             SizeFormat::MEGABYTES => "mb",
             SizeFormat::GIGABYTES => "gb",
         };

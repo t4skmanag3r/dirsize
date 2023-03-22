@@ -179,13 +179,13 @@ impl fmt::Display for Dir {
 
 #[cfg(test)]
 mod test {
-    use crate::scanning::make_dir_tree_multithreaded;
+    use crate::scanning::make_dir_tree_parallel;
     use std::path::Path;
 
     #[test]
     fn test_dir_find() {
         let root = Path::new(".");
-        let tree = make_dir_tree_multithreaded(root.to_path_buf());
+        let tree = make_dir_tree_parallel(root.to_path_buf());
         let found = tree.find(&Path::new("./src/lib.rs").to_path_buf());
 
         assert_eq!(found.path, Path::new("./src/").to_path_buf());
@@ -194,7 +194,7 @@ mod test {
     #[test]
     fn test_filter_size() {
         let root = Path::new(".");
-        let tree = make_dir_tree_multithreaded(root.to_path_buf());
+        let tree = make_dir_tree_parallel(root.to_path_buf());
         let size_min = 1000000;
         let filtered = tree.filter_size(size_min);
 

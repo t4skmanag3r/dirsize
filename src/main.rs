@@ -2,7 +2,7 @@ extern crate dirsize;
 use clap::Parser;
 use crossterm::Result;
 use dirsize::menu::Menu;
-use dirsize::scanning::make_dir_tree_multithreaded;
+use dirsize::scanning::make_dir_tree_parallel;
 use dirsize::structs::SizeFormat;
 use std::path::PathBuf;
 
@@ -28,7 +28,7 @@ fn main() -> Result<()> {
         "Running size calculation for directory: {}",
         root_path.display()
     );
-    let mut dir = make_dir_tree_multithreaded(root_path);
+    let mut dir = make_dir_tree_parallel(root_path);
 
     // Sorting the directory from bigest to smallest
     dir.sort_by_size();
